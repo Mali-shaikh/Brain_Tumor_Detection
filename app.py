@@ -71,7 +71,7 @@ st.markdown("""
 @st.cache_resource
 def load_model():
     """Load the trained model with detailed error handling"""
-    model_path = 'brain_tumor_model.keras'
+    model_path = 'brain_tumor_model.h5'
     
     # Check if model file exists
     if not os.path.exists(model_path):
@@ -82,7 +82,7 @@ def load_model():
         
         **Solutions:**
         1. Make sure you've trained the model: `python train_model.py`
-        2. Check that `brain_tumor_model.keras` is in the same folder as `app.py`
+        2. Check that `brain_tumor_model.h5` is in the same folder as `app.py`
         3. Current directory: `{os.getcwd()}`
         
         **Files in current directory:**
@@ -108,7 +108,7 @@ def load_model():
         
         **Possible solutions:**
         1. Retrain the model: `python train_model.py`
-        2. Check TensorFlow version: `pip install tensorflow==2.15.0`
+        2. Check TensorFlow version: `pip install tensorflow>=2.15.0`
         3. Make sure model file isn't corrupted
         """)
         return None
@@ -183,7 +183,7 @@ def main():
         st.write(f"**OpenCV Version:** {cv2.__version__}")
         st.write(f"**Python Version:** {sys.version.split()[0]}")
         st.write(f"**Current Directory:** {os.getcwd()}")
-        st.write(f"**Model File Size:** {os.path.getsize('brain_tumor_model.keras') / (1024*1024):.2f} MB")
+        st.write(f"**Model File Size:** {os.path.getsize('brain_tumor_model.h5') / (1024*1024):.2f} MB")
     
     # Sidebar information
     with st.sidebar:

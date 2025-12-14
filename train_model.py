@@ -209,7 +209,7 @@ class BrainTumorModel:
         plt.savefig('training_history.png')
         print("Training history saved as 'training_history.png'")
     
-    def save_model(self, filepath='brain_tumor_model.keras'):
+    def save_model(self, filepath='brain_tumor_model.h5'):
         """Save the trained model"""
         self.model.save(filepath)
         print(f"Model saved as '{filepath}'")
@@ -264,8 +264,8 @@ if __name__ == "__main__":
     
     # Save model
     print("\n7. Saving model...")
-    model_trainer.save_model('brain_tumor_model.keras')
+    model_trainer.save_model('brain_tumor_model.h5')
     
     print("\n" + "=" * 50)
     print("Training completed successfully!")
-    print("Model saved as 'brain_tumor_model.keras'")
+    print("Model saved as 'brain_tumor_model.h5'")

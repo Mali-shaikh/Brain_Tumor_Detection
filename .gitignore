@@ -44,9 +44,5 @@ Thumbs.db
 
 # Project specific
 brain_tumor_dataset/
-*.h5
-training_history.png
-.streamlit/
-
 # Keep model file for deployment
-!brain_tumor_model.keras
+!brain_tumor_model.h5
