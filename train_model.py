@@ -166,21 +166,80 @@ class BrainTumorModel:
         # Train fine-tuned model
         total_epochs = epochs + 10 # Add 10 more epochs
         
+        # Ensure proper integer conversion and handling for initial_epoch
+        last_epoch = 0
+        if self.history and self.history.epoch:
+            last_epoch = self.history.epoch[-1]
+            
         history_fine = self.model.fit(
             X_train, y_train,
             validation_data=(X_val, y_val),
-            initial_epoch=self.history.epoch[-1],
+            initial_epoch=last_epoch + 1,
             epochs=total_epochs,
             batch_size=batch_size,
             callbacks=[early_stopping, reduce_lr],
             verbose=1
         )
         
-        # Merge histories (optional, but good for plotting)
-        # For simplicity, we'll just keep the latest history object for plotting the fine-tuning phase
-        # or we could append. For now, let's just use the fine-tuning history as the final result.
-        self.history = history_fine
+        # Merge histories
+        # Merge histories
+        # Map keys from fine-tuning to original keys
+        # Usually fine-tuning adds _1 suffix if metrics are recompiled
         
+        base_metrics = ['loss', 'accuracy', 'val_loss', 'val_accuracy']
+        
+        for key in self.history.history:
+            target_key = key
+            
+            # If key not in fine history, try to find the matching one with suffix
+            if key not in history_fine.history:
+                # Try finding a key that starts with the base key name (e.g. precision for precision_1)
+                # This is a simple heuristic
+                candidates = [k for k in history_fine.history.keys() if k.startswith(key + '_') or (key in k and 'val_' in k == 'val_' in key)]
+                # If we have 'precision' and fine has 'precision_1', match them.
+                # Actually, simpler: just iterate fine history keys and map them back if needed?
+                # or just append indiscriminately if we can't match?
+                # Let's try to match by metric type.
+                pass
+
+        # Robust merge strategy:
+        # 1. Standard metrics (loss, accuracy) should match.
+        # 2. Precision/Recall might have suffix.
+        
+        # We will assume order of metrics in compile matches.
+        # But easier: just create a new combined dictionary mapping "standard" names to the lists.
+        
+        combined_history = {}
+        
+        # Heuristic mapping
+        metric_types = ['loss', 'accuracy', 'precision', 'recall']
+        
+        for m_type in metric_types:
+            # Find key in original
+            orig_key = next((k for k in self.history.history.keys() if m_type in k and 'val_' not in k), None)
+            val_orig_key = next((k for k in self.history.history.keys() if m_type in k and 'val_' in k), None)
+            
+            fine_key = next((k for k in history_fine.history.keys() if m_type in k and 'val_' not in k), None)
+            val_fine_key = next((k for k in history_fine.history.keys() if m_type in k and 'val_' in k), None)
+            
+            if orig_key and fine_key:
+                # Create a standardized key name (e.g., 'precision' instead of 'precision_1')
+                std_key = m_type
+                combined_history[std_key] = self.history.history[orig_key] + history_fine.history[fine_key]
+                
+            if val_orig_key and val_fine_key:
+                std_key = f"val_{m_type}"
+                combined_history[std_key] = self.history.history[val_orig_key] + history_fine.history[val_fine_key]
+
+        # Update self.history.history with the clean combined version
+        # We need to make sure self.history object still works for plotting which expects .history attribute
+        self.history.history = combined_history
+        
+        # Save history to JSON for reporting
+        import json
+        with open('history.json', 'w') as f:
+            json.dump(self.history.history, f)
+            
         return self.history
     
     def plot_training_history(self):
@@ -253,10 +312,23 @@ if __name__ == "__main__":
     # Evaluate on test set
     print("\n5. Evaluating on test set...")
     test_results = model_trainer.model.evaluate(X_test, y_test)
-    print(f"\nTest Loss: {test_results[0]:.4f}")
-    print(f"Test Accuracy: {test_results[1]:.4f}")
-    print(f"Test Precision: {test_results[2]:.4f}")
-    print(f"Test Recall: {test_results[3]:.4f}")
+    
+    test_loss = test_results[0]
+    test_acc = test_results[1]
+    test_prec = test_results[2]
+    test_rec = test_results[3]
+    
+    # Calculate F1 Score manually
+    if (test_prec + test_rec) > 0:
+        test_f1 = 2 * (test_prec * test_rec) / (test_prec + test_rec)
+    else:
+        test_f1 = 0
+    
+    print(f"\nTest Loss: {test_loss:.4f}")
+    print(f"Test Accuracy: {test_acc:.4f} ({test_acc*100:.2f}%)")
+    print(f"Test Precision: {test_prec:.4f} ({test_prec*100:.2f}%)")
+    print(f"Test Recall: {test_rec:.4f} ({test_rec*100:.2f}%)")
+    print(f"Test F1-Score: {test_f1:.4f} ({test_f1*100:.2f}%)")
     
     # Plot training history
     print("\n6. Plotting training history...")
